@@ -1,0 +1,104 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  username  String   @unique
+  password  String
+  avatar    String?
+
+  coupleId  Int?
+  couple    Couple? @relation(fields: [coupleId], references: [id], onDelete: SetNull)
+  answers    Answer[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+}
+
+model Couple {
+  id               Int      @id @default(autoincrement())
+  inviteCode       String   @unique
+  relationStart    DateTime?
+  notificationTime String   @default("20:00")
+  isActive         Boolean  @default(true)
+  relationType     RelationType @default(DATING)
+  coupleQuestions  CoupleQuestion[]
+  
+  users            User[]
+  
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model Question {
+  id                Int   @id @default(autoincrement())
+  text              String
+  category          Category @default(GENERAL)
+  answerType        AnswerType @default(TEXT)
+  options           String?
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+
+  coupleQuestions   CoupleQuestion[]
+}
+
+model CoupleQuestion {
+  id                Int   @id @default(autoincrement())
+  coupleId          Int
+  couple            Couple @relation(fields: [coupleId], references: [id], onDelete: Cascade)
+
+  questionId        Int
+  question          Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  answers           Answer[]
+  sentAt            DateTime @default(now())
+  
+  @@unique([coupleId, questionId])
+  @@index([coupleId, sentAt])
+}
+
+model Answer {
+  id               Int      @id @default(autoincrement())
+  
+  userId           Int
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  coupleQuestionId Int
+  coupleQuestion   CoupleQuestion @relation(fields: [coupleQuestionId], references: [id], onDelete: Cascade)
+  
+  textValue        String?  // для текстовых
+  scaleValue       Int?     // для рейтинга 1-10
+  choiceValue      String?  // для выбора варианта (A, B, C, D)
+  
+  createdAt        DateTime @default(now())
+  
+  @@unique([userId, coupleQuestionId])
+  @@index([coupleQuestionId])
+}
+
+enum RelationType {
+  DATING
+  MARRIED
+  ENGAGED
+}
+
+enum Category {
+  GENERAL
+  INTIMACY
+  COMMUNICATION
+  GOALS
+  FUN
+  DEEP
+}
+
+enum AnswerType {
+  TEXT          // текстовый ответ
+  SCALE         // шкала 1-10
+  CHOICE        // выбор из вариантов
+  YESNO         // да/нет
+}
