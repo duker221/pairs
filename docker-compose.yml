@@ -13,5 +13,18 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  backend:
+    build: .
+    container_name: paired-backend
+    restart: always
+    ports:
+      - '3001:3001'
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/paired
+      - JWT_SECRET=change-this-to-strong-secret-key
+      - JWT_EXPIRES_IN=7d
+
 volumes:
   postgres_data:
