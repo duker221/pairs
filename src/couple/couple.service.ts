@@ -4,7 +4,11 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { CreateCoupleDto, JoinCoupleDto } from './dto/couple.dto';
+import {
+  CreateCoupleDto,
+  JoinCoupleDto,
+  UpdateCoupleDto,
+} from './dto/couple.dto';
 import { randomUUID } from 'node:crypto';
 
 @Injectable()
@@ -52,22 +56,27 @@ export class CoupleService {
 
   async joinCouple(userId: number, joinCoupleDto: JoinCoupleDto) {
     const user = await this.prisma.user.findUnique({
-      where: {
-        id: userId,
+      where: { id: userId },
+      include: {
+        couple: {
+          include: { users: true },
+        },
       },
     });
 
     if (user?.coupleId) {
-      throw new ConflictException('You are already in a couple');
+      if (user?.couple?.users.length === 1) {
+        await this.prisma.couple.delete({
+          where: { id: user.coupleId },
+        });
+      } else {
+        throw new ConflictException('You are already in a couple with someone');
+      }
     }
 
     const couple = await this.prisma.couple.findUnique({
-      where: {
-        inviteCode: joinCoupleDto.inviteCode,
-      },
-      include: {
-        users: true,
-      },
+      where: { inviteCode: joinCoupleDto.inviteCode },
+      include: { users: true },
     });
 
     if (!couple) {
@@ -79,14 +88,10 @@ export class CoupleService {
     }
 
     const updatedCouple = await this.prisma.couple.update({
-      where: {
-        id: couple.id,
-      },
+      where: { id: couple.id },
       data: {
         users: {
-          connect: {
-            id: userId,
-          },
+          connect: { id: userId },
         },
       },
       include: {
@@ -100,6 +105,7 @@ export class CoupleService {
         },
       },
     });
+
     return updatedCouple;
   }
 
@@ -129,6 +135,39 @@ export class CoupleService {
     }
 
     return user.couple;
+  }
+
+  async updateCouple(userId: number, updateCoupleDto: UpdateCoupleDto) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { couple: true },
+    });
+
+    if (!user?.couple) {
+      throw new NotFoundException('You are not in a couple');
+    }
+
+    const updatedCouple = await this.prisma.couple.update({
+      where: { id: user.coupleId! },
+      data: {
+        relationStart: updateCoupleDto.relationStart
+          ? new Date(updateCoupleDto.relationStart)
+          : undefined,
+        notificationTime: updateCoupleDto.notificationTime,
+      },
+      include: {
+        users: {
+          select: {
+            id: true,
+            username: true,
+            avatar: true,
+            email: true,
+          },
+        },
+      },
+    });
+
+    return updatedCouple;
   }
 
   async leave(userId: number) {
