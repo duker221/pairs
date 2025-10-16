@@ -29,6 +29,44 @@ export class QuestionService {
     });
   }
 
+  async getCoupleHistory(userId: number) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { couple: true },
+    });
+
+    if (!user?.couple) {
+      throw new NotFoundException('User is not in a couple');
+    }
+
+    const coupleQuestions = await this.prisma.coupleQuestion.findMany({
+      where: { coupleId: user.couple.id },
+      include: {
+        question: true,
+        answers: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                username: true,
+                avatar: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: { sentAt: 'desc' },
+    });
+
+    return coupleQuestions.map((cq) => ({
+      coupleQuestionId: cq.id,
+      sentAt: cq.sentAt,
+      question: cq.question,
+      bothAnswered: cq.answers.length === 2,
+      answers: cq.answers.length === 2 ? cq.answers : [],
+    }));
+  }
+
   async getTodayQuestion(userId: number) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },

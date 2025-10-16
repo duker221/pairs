@@ -46,6 +46,17 @@ export class QuestionController {
     return this.questionService.getQuestions();
   }
 
+  @Get('couple/history')
+  @ApiOperation({ summary: 'Get couple question history' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns all past questions with answers for the couple',
+  })
+  @ApiResponse({ status: 404, description: 'User is not in a couple' })
+  async getCoupleHistory(@Request() req: Request & { user: UserResponse }) {
+    return await this.questionService.getCoupleHistory(req.user.id);
+  }
+
   @Get('today')
   @ApiOperation({ summary: "Get today's question for current couple" })
   @ApiResponse({
