@@ -16,7 +16,8 @@ model User {
 
   coupleId  Int?
   couple    Couple? @relation(fields: [coupleId], references: [id], onDelete: SetNull)
-  answers    Answer[]
+  answers   Answer[]
+  messages  Message[]
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now())
 }
@@ -56,10 +57,27 @@ model CoupleQuestion {
   questionId        Int
   question          Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
   answers           Answer[]
+  messages          Message[]
   sentAt            DateTime @default(now())
   
   @@unique([coupleId, questionId])
   @@index([coupleId, sentAt])
+}
+
+model Message {
+  id                Int   @id @default(autoincrement())
+  
+  coupleQuestionId  Int   
+  coupleQuestion    CoupleQuestion @relation(fields: [coupleQuestionId], references: [id], onDelete: Cascade)
+
+  userId            Int
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  text              String
+
+  createdAt         DateTime @default(now())
+
+  @@index([coupleQuestionId, createdAt])
 }
 
 model Answer {

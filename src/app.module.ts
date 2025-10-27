@@ -7,6 +7,7 @@ import { CoupleModule } from './couple/couple.module';
 import { QuestionModule } from './question/question.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { AnswerModule } from './answer/answer.module';
+import { MessageModule } from './message/message.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { AnswerModule } from './answer/answer.module';
     QuestionModule,
     PrismaModule,
     AnswerModule,
+    MessageModule,
   ],
   controllers: [AppController],
   providers: [AppService],

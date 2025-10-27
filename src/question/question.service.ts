@@ -29,6 +29,63 @@ export class QuestionService {
     });
   }
 
+  async getCoupleFeed(userId: number) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { couple: true },
+    });
+
+    if (!user?.couple) {
+      throw new NotFoundException('User is not in a couple');
+    }
+
+    const coupleQuestions = await this.prisma.coupleQuestion.findMany({
+      where: { coupleId: user.couple.id },
+      include: {
+        question: true,
+        answers: true,
+        messages: {
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+          include: {
+            user: {
+              select: {
+                id: true,
+                username: true,
+                avatar: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: { sentAt: 'desc' },
+    });
+
+    return {
+      questions: coupleQuestions.map((cq) => ({
+        id: cq.id,
+        sentAt: cq.sentAt,
+        question: {
+          text: cq.question.text,
+          category: cq.question.category,
+          answerType: cq.question.answerType,
+        },
+        lastMessage: cq.messages[0]
+          ? {
+              text: cq.messages[0].text,
+              user: {
+                username: cq.messages[0].user.username,
+                avatar: cq.messages[0].user.avatar,
+              },
+              createdAt: cq.messages[0].createdAt,
+            }
+          : null,
+        bothAnswered: cq.answers.length === 2,
+        messagesCount: cq.messages.length,
+      })),
+    };
+  }
+
   async getCoupleHistory(userId: number) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -161,6 +218,62 @@ export class QuestionService {
 
     return {
       coupleQuestionId: coupleQuestion.id,
+      question: coupleQuestion.question,
+      userAnswered: !!userAnswer,
+      partnerAnswered: !!partnerAnswer,
+      bothAnswered: coupleQuestion.answers.length === 2,
+      answers:
+        coupleQuestion.answers.length === 2
+          ? coupleQuestion.answers
+          : undefined,
+    };
+  }
+
+  async getCoupleQuestion(userId: number, coupleQuestionId: number) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { couple: true },
+    });
+
+    if (!user?.couple) {
+      throw new NotFoundException('User is not in a couple');
+    }
+
+    const coupleQuestion = await this.prisma.coupleQuestion.findUnique({
+      where: { id: coupleQuestionId },
+      include: {
+        question: true,
+        answers: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                username: true,
+                avatar: true,
+              },
+            },
+          },
+        },
+        couple: true,
+      },
+    });
+
+    if (!coupleQuestion) {
+      throw new NotFoundException('Question not found');
+    }
+
+    if (coupleQuestion.coupleId !== user.couple.id) {
+      throw new NotFoundException('Not your question');
+    }
+
+    const userAnswer = coupleQuestion.answers.find((a) => a.userId === userId);
+    const partnerAnswer = coupleQuestion.answers.find(
+      (a) => a.userId !== userId,
+    );
+
+    return {
+      coupleQuestionId: coupleQuestion.id,
+      sentAt: coupleQuestion.sentAt,
       question: coupleQuestion.question,
       userAnswered: !!userAnswer,
       partnerAnswered: !!partnerAnswer,
