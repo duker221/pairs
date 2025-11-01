@@ -3,6 +3,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { User } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { RegisterDto } from 'src/auth/dto/auth.dto';
+import { UserWithRelations } from 'src/auth/types/auth-response.types';
 
 @Injectable()
 export class UserService {
@@ -33,9 +34,10 @@ export class UserService {
     });
   }
 
-  async findById(id: number): Promise<User | null> {
+  async findById(id: number): Promise<UserWithRelations | null> {
     return this.prisma.user.findUnique({
       where: { id },
+      include: { answers: true },
     });
   }
 

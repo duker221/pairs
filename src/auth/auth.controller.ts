@@ -15,7 +15,7 @@ import {
 import { AuthService } from './auth.service';
 import { LoginDto, RegisterDto } from './dto/auth.dto';
 import { JwtGuard } from './guards/jwt.guard';
-import { User } from '@prisma/client';
+import { UserWithRelations } from './types/auth-response.types';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -82,7 +82,7 @@ export class AuthController {
     },
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  getProfile(@Request() req: Request & { user: User }) {
+  getProfile(@Request() req: Request & { user: UserWithRelations }) {
     return req.user;
   }
 }
