@@ -15,10 +15,6 @@ import { WebSocketExceptionFilter } from './filters/ws-exception.filter';
 @UseFilters(WebSocketExceptionFilter)
 @WebSocketGateway({
   namespace: '/messages',
-  cors: {
-    origin: '*',
-    credentials: true,
-  },
 })
 export class MessageGateway
   implements OnGatewayConnection, OnGatewayDisconnect
@@ -45,7 +41,6 @@ export class MessageGateway
     await client.join(`question_${coupleQuestionId}`);
     const userId = client.data.user?.id;
     this.logger.log(`User ${userId} joined room: question_${coupleQuestionId}`);
-    console.log('client connected to room');
     return { success: true };
   }
 
