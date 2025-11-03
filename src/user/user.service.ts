@@ -44,4 +44,21 @@ export class UserService {
   async getAllUsers(): Promise<User[]> {
     return this.prisma.user.findMany();
   }
+
+  async updateUserPushToken(
+    userId: number,
+    expoPushToken: string,
+  ): Promise<User> {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { expoPushToken },
+    });
+  }
+
+  async deleteUserPushToken(userId: number): Promise<User> {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { expoPushToken: null },
+    });
+  }
 }

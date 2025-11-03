@@ -8,6 +8,7 @@ import { QuestionModule } from './question/question.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { AnswerModule } from './answer/answer.module';
 import { MessageModule } from './message/message.module';
+import { NotificationsModule } from './notification/notifications.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { MessageModule } from './message/message.module';
     PrismaModule,
     AnswerModule,
     MessageModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

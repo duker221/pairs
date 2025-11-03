@@ -55,8 +55,8 @@ export class AuthService {
       throw new UnauthorizedException('User not found');
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password, ...userWithoutPassword } = user;
-    void password;
     return userWithoutPassword;
   }
 
